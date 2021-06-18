@@ -1,0 +1,243 @@
+
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1">
+		<title>游客偏好系统</title>
+		<script src="http://static.popodv.com/dvlibs/echarts/echarts.v4.min.js"></script>
+		<script src="http://api.map.baidu.com/getscript?v=2.0&ak=BXeUMNPwjPthr6Agmt8Oqee8Y7BL243T"></script>
+		<script src="http://static.popodv.com/dvlibs/echarts/bmap.min.js"></script>
+		<script src="http://static.popodv.com/dvlibs/tool/jquery.min.js"></script>
+		<style>
+            body{text-align: center;}
+            #container{width:100%;height:100%;margin:0;padding:0;}
+            #city{
+                background:#fafdfe;
+                height:28px;
+                width:160px;
+                line-height:28px;
+                border:1px solid #7B7B7B;
+                -moz-border-radius:2px;
+                -webkit-border-radius:2px;
+                border-radius:2px;
+                text-align: center;
+                text-align-last: center;
+                font-size: 10px;
+            }
+            .button {
+                background-color: #6C6C6C;
+                border: none;
+                color: white;
+                padding: 5px 25px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 16px;
+
+                -webkit-transition-duration: 0.4s; /* Safari */
+                transition-duration: 0.4s;
+                cursor: pointer;
+            }
+            .button1:hover {
+                background-color: #333333;
+                color: white;
+            }
+        </style>
+	</head>
+	<body>
+        <div>
+        <form method="post" action="/">
+        <select name="cities" id="city" >
+            <option selected>{{ get_city }}</option>
+            {% for city in cities %}
+                <option value="{{city}}">{{ city }}</option>
+            {% endfor %}
+        </select>
+        <input class="button button1" type="submit" value="提交" />
+        </form>
+        </div>
+		<div id="container"></div>
+		<script type="application/javascript">
+
+		var myChart = echarts.init(document.getElementById('container'));
+
+
+
+        var data = {{ name_value|tojson }};
+        data = JSON.parse(data);
+
+        var geoCoordMap = {{ name_lng_lat|tojson }}
+        geoCoordMap = JSON.parse(geoCoordMap)
+
+        var k_coord = {{ k_lng_lat }}
+        //document.getElementById("test").innerHTML = geoCoordMap[data[1].name];
+
+			var convertData = function (data) {
+				var res = [];
+				for (var i = 0; i < data.length; i++) {
+					var geoCoord = geoCoordMap[data[i].name];
+					if (geoCoord) {
+						res.push({
+							name: data[i].name,
+							value: geoCoord.concat(data[i].value)
+						});
+					}
+				}
+				return res;
+			};
+
+			var option = {
+				tooltip: {
+					trigger: 'item'
+				},
+				bmap: {
+					center: [104.114129, 32.550339],
+					zoom: 5,
+					roam: true,
+					mapStyle: {
+						styleJson: [{
+							'featureType': 'water',
+							'elementType': 'all',
+							'stylers': {
+								'color': '#d1d1d1'
+							}
+						}, {
+							'featureType': 'land',
+							'elementType': 'all',
+							'stylers': {
+								'color': '#f3f3f3'
+							}
+						}, {
+							'featureType': 'railway',
+							'elementType': 'all',
+							'stylers': {
+								'visibility': 'off'
+							}
+						}, {
+							'featureType': 'highway',
+							'elementType': 'all',
+							'stylers': {
+								'color': '#fdfdfd'
+							}
+						}, {
+							'featureType': 'highway',
+							'elementType': 'labels',
+							'stylers': {
+								'visibility': 'off'
+							}
+						}, {
+							'featureType': 'arterial',
+							'elementType': 'geometry',
+							'stylers': {
+								'color': '#fefefe'
+							}
+						}, {
+							'featureType': 'arterial',
+							'elementType': 'geometry.fill',
+							'stylers': {
+								'color': '#fefefe'
+							}
+						}, {
+							'featureType': 'poi',
+							'elementType': 'all',
+							'stylers': {
+								'visibility': 'off'
+							}
+						}, {
+							'featureType': 'green',
+							'elementType': 'all',
+							'stylers': {
+								'visibility': 'off'
+							}
+						}, {
+							'featureType': 'subway',
+							'elementType': 'all',
+							'stylers': {
+								'visibility': 'off'
+							}
+						}, {
+							'featureType': 'manmade',
+							'elementType': 'all',
+							'stylers': {
+								'color': '#d1d1d1'
+							}
+						}, {
+							'featureType': 'local',
+							'elementType': 'all',
+							'stylers': {
+								'color': '#d1d1d1'
+							}
+						}, {
+							'featureType': 'arterial',
+							'elementType': 'labels',
+							'stylers': {
+								'visibility': 'off'
+							}
+						}, {
+							'featureType': 'boundary',
+							'elementType': 'all',
+							'stylers': {
+								'color': '#fefefe'
+							}
+						}, {
+							'featureType': 'building',
+							'elementType': 'all',
+							'stylers': {
+								'color': '#d1d1d1'
+							}
+						}, {
+							'featureType': 'label',
+							'elementType': 'labels.text.fill',
+							'stylers': {
+								'color': '#999999'
+							}
+						}]
+					}
+				},
+				series: [
+					{
+						name: '数量',
+						type: 'scatter',
+						coordinateSystem: 'bmap',
+						data: convertData(data),
+						symbolSize: function (val) {
+							return val[2];//0是经度，1是维度，2是数量
+						},
+                        encode:{
+						    value: 2
+                        },
+						label: {
+							normal: {
+								formatter: '{b}',
+								position: 'left',
+								show: false
+							},
+							emphasis: {
+								show: true
+							}
+						},
+						itemStyle: {
+							normal: {
+								color: 'purple'
+							}
+						}
+					},
+                    {
+                        type: 'effectScatter',
+                        symbolSize:20,
+                        coordinateSystem: 'bmap',
+                        data:k_coord
+
+                    },
+				]
+			};
+			myChart.setOption(option);
+
+
+		// 刷新调整
+		window.onresize = function () {
+			myChart.resize();
+		}
+				</script>
+</body>
+</html>
